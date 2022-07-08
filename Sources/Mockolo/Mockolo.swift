@@ -19,10 +19,13 @@ import Foundation
 import TSCUtility
 import TSCBasic
 import MockoloFramework
+import Backtrace
 
 @main
 struct Mockolo {
     static func main() {
+        Backtrace.install()
+
         let inputs = Array(CommandLine.arguments.dropFirst())
         if let arg = inputs.first, (arg == "--version" || arg == "-v") {
             print(Version.current.value)

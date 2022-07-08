@@ -169,8 +169,8 @@ struct Executor: ParsableCommand {
     private var srcs: [String] = []
 
     mutating func run() throws {
-        print("Start...")
-        defer { print("Done.") }
+        // print("Start...")
+        // defer { print("Done.") }
 
         let outputFilePath = fullPath(self.outputFilePath)
         

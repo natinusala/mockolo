@@ -165,3 +165,9 @@ public func generate(sourceDirs: [String],
     
     onCompletion(result)
 }
+
+#if os(Linux)
+func CFAbsoluteTimeGetCurrent() -> Double {
+    return 0 // STUB
+}
+#endif
