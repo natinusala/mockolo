@@ -79,12 +79,22 @@ extension ClassModel {
         
         let extraInits = extraInitsIfNeeded(initParamCandidates: initParamCandidates, declaredInits: declaredInits,  acl: acl, declType: declType, overrides: metadata?.varTypes)
 
+        let wrapperInit = wrapperInit(
+            acl: acl,
+            identifier: identifier,
+            moduleDot: moduleDot,
+            entities: entities
+        )
+
         var body = ""
         if !typealiasTemplate.isEmpty {
             body += "\(typealiasTemplate)\n"
         }
         if !extraInits.isEmpty {
             body += "\(extraInits)\n"
+        }
+        if !wrapperInit.isEmpty {
+            body += "\(wrapperInit)\n"
         }
         if !renderedEntities.isEmpty {
             body += "\(renderedEntities)"
@@ -99,6 +109,49 @@ extension ClassModel {
         """
         
         return template
+    }
+
+    private func findTypeName(of type: Type, genericTypeParams: [ParamModel]) -> String {
+        let typeName = type.displayName
+        for genericParam in genericTypeParams {
+            if genericParam.name == typeName {
+                return "any \(genericParam.type.displayName)"
+            }
+        }
+        return typeName
+    }
+
+    private func makeCast(originalType: String, newType: String) -> String {
+        if originalType == newType {
+            return ""
+        }
+
+        return " as! \(newType)"
+    }
+
+    private func wrapperInit(acl: String, identifier: String, moduleDot: String, entities: [(String, Model)]) -> String {
+        let renderedEntities = entities.compactMap { (_, model) in
+            if let model = model as? MethodModel {
+                let closureParams = model.params.map { $0.name }.joined(separator: ", ")
+                let wrappedCallParams = model.params
+                    .map { "\($0.callLabel): (\($0.name)\(makeCast(originalType: $0.type.displayName, newType: findTypeName(of: $0.type, genericTypeParams: model.genericTypeParams))))" }
+                    .joined(separator: ", ")
+
+                return """
+                \(2.tab)self.\(model.name)Handler = { (\(closureParams)) in
+                \(3.tab)return wrapped.\(model.name)(\(wrappedCallParams))
+                \(2.tab)}
+                """
+            }
+
+            return nil
+        }
+
+        return """
+        \(1.tab)\(acl)init(wrapping wrapped: any \(moduleDot)\(identifier)) {
+        \(renderedEntities.joined(separator: "\n"))
+        \(1.tab)}
+        """
     }
     
     private func extraInitsIfNeeded(initParamCandidates: [Model],
