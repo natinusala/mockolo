@@ -130,7 +130,7 @@ extension ClassModel {
     }
 
     private func wrapperInit(acl: String, identifier: String, moduleDot: String, entities: [(String, Model)]) -> String {
-        let renderedEntities = entities.compactMap { (_, model) in
+        let renderedEntities = entities.compactMap { (identifier, model) in
             if let model = model as? MethodModel {
                 let closureParams = model.params.map { $0.name }.joined(separator: ", ")
                 let wrappedCallParams = model.params
@@ -138,7 +138,7 @@ extension ClassModel {
                     .joined(separator: ", ")
 
                 return """
-                \(2.tab)self.\(model.name)Handler = { (\(closureParams)) in
+                \(2.tab)self.\(identifier)Handler = { (\(closureParams)) in
                 \(3.tab)return wrapped.\(model.name)(\(wrappedCallParams))
                 \(2.tab)}
                 """
